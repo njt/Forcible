@@ -36,7 +36,7 @@ class Database:
                 published_date TEXT,
                 fetched_date TEXT NOT NULL,
                 content TEXT,
-                data JSON,
+                data TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )

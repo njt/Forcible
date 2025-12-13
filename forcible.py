@@ -83,7 +83,8 @@ def cmd_init(args):
             sys.exit(1)
         
         # Copy example config
-        example_path = Path('config.example.ini')
+        script_dir = Path(__file__).parent
+        example_path = script_dir / 'config.example.ini'
         if not example_path.exists():
             print("Error: config.example.ini not found", file=sys.stderr)
             sys.exit(1)

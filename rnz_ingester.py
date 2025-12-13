@@ -163,7 +163,7 @@ class RNZIngester:
             headers = {
                 'User-Agent': 'Mozilla/5.0 (compatible; NewsAggregator/1.0)'
             }
-            response = requests.get(url, headers=headers, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10, verify=True)
             response.raise_for_status()
             
             # Basic extraction - in production, would use BeautifulSoup
