@@ -221,6 +221,69 @@ class Database:
         
         return articles
     
+    def get_unprocessed_articles(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Get articles that haven't been processed by LLM yet.
+        
+        Args:
+            limit: Maximum number of articles to return (optional)
+            
+        Returns:
+            List of article dictionaries
+        """
+        cursor = self.conn.cursor()
+        
+        # Articles are unprocessed if data is NULL or doesn't contain 'key_facts'
+        query = '''
+            SELECT * FROM articles 
+            WHERE data IS NULL 
+               OR (data NOT LIKE '%key_facts%' AND data NOT LIKE '%error%')
+            ORDER BY published_date DESC
+        '''
+        
+        if limit:
+            query += f' LIMIT {limit}'
+        
+        cursor.execute(query)
+        
+        articles = []
+        for row in cursor.fetchall():
+            article = dict(row)
+            if article['data']:
+                try:
+                    article['data'] = json.loads(article['data'])
+                except json.JSONDecodeError:
+                    article['data'] = None
+            articles.append(article)
+        
+        return articles
+    
+    def get_article_by_id(self, article_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get a single article by ID.
+        
+        Args:
+            article_id: Article ID
+            
+        Returns:
+            Article dictionary or None if not found
+        """
+        cursor = self.conn.cursor()
+        cursor.execute('SELECT * FROM articles WHERE id = ?', (article_id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            return None
+        
+        article = dict(row)
+        if article['data']:
+            try:
+                article['data'] = json.loads(article['data'])
+            except json.JSONDecodeError:
+                article['data'] = None
+        
+        return article
+    
     def close(self):
         """Close database connection."""
         self.conn.close()
