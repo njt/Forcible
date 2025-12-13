@@ -94,6 +94,8 @@ Please provide:
 
         try:
             # Use structured output with response_format
+            # Note: Using beta API for structured outputs which provides strong guarantees
+            # that the output matches the Pydantic schema
             completion = self.client.beta.chat.completions.parse(
                 model=self.model,
                 messages=[
@@ -132,6 +134,9 @@ Please provide:
             return result
             
         except Exception as e:
+            # Catch OpenAI API errors and other exceptions
+            # For production use, consider catching specific exceptions:
+            # - openai.APIError, openai.RateLimitError, etc.
             print(f"Error during LLM analysis: {e}")
             # Return a default structure on error
             return {

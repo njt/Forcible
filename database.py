@@ -230,6 +230,11 @@ class Database:
             
         Returns:
             List of article dictionaries
+            
+        Note:
+            Uses LIKE pattern matching on JSON data field. For better performance
+            on large datasets, consider using JSON functions like json_extract()
+            or adding a separate 'processed' boolean column.
         """
         cursor = self.conn.cursor()
         
@@ -242,9 +247,10 @@ class Database:
         '''
         
         if limit:
-            query += f' LIMIT {limit}'
-        
-        cursor.execute(query)
+            query += ' LIMIT ?'
+            cursor.execute(query, (limit,))
+        else:
+            cursor.execute(query)
         
         articles = []
         for row in cursor.fetchall():
