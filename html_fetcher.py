@@ -7,7 +7,11 @@ from bs4 import BeautifulSoup
 
 
 class HTMLFetcher:
-    """Handles fetching and storing raw HTML content from article URLs."""
+    """Handles fetching and extracting article content from URLs.
+    
+    Extracts essential content (text, headings, links) while removing
+    navigation, ads, and other non-content elements to minimize token usage.
+    """
     
     def __init__(self, database):
         """
@@ -61,33 +65,43 @@ class HTMLFetcher:
             
             # Extract text content with structure
             extracted = []
-            
-            # Extract title if available
-            title = soup.find('h1')
-            if title:
-                extracted.append(f"# {title.get_text(strip=True)}\n")
+            seen_title = False
             
             # Extract paragraphs, headings, and lists from the article content
             for element in article_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'blockquote']):
                 text = element.get_text(strip=True)
-                if text:  # Only include non-empty elements
-                    tag = element.name
+                if not text:  # Skip empty elements
+                    continue
+                
+                tag = element.name
+                
+                if tag == 'p':
+                    extracted.append(text)
+                    extracted.append("")  # Blank line after paragraph
+                elif tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                    # Skip duplicate h1 (title) if we've already seen one
+                    if tag == 'h1' and seen_title:
+                        continue
+                    if tag == 'h1':
+                        seen_title = True
                     
-                    if tag == 'p':
-                        extracted.append(text)
-                    elif tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                        level = int(tag[1])
-                        extracted.append(f"\n{'#' * level} {text}\n")
-                    elif tag in ['ul', 'ol']:
-                        # Extract list items
-                        for li in element.find_all('li', recursive=False):
-                            li_text = li.get_text(strip=True)
-                            if li_text:
-                                extracted.append(f"- {li_text}")
-                    elif tag == 'blockquote':
-                        extracted.append(f"> {text}")
-                    
-                    extracted.append("")  # Add blank line between elements
+                    level = int(tag[1])
+                    # Add blank line before heading (except first one)
+                    if extracted:
+                        extracted.append("")
+                    extracted.append(f"{'#' * level} {text}")
+                    extracted.append("")  # Blank line after heading
+                elif tag in ['ul', 'ol']:
+                    # Extract list items
+                    for li in element.find_all('li', recursive=False):
+                        li_text = li.get_text(strip=True)
+                        if li_text:
+                            extracted.append(f"- {li_text}")
+                    extracted.append("")  # Blank line after list
+                elif tag == 'blockquote':
+                    extracted.append(f"> {text}")
+                    extracted.append("")  # Blank line after quote
+            
             
             # Extract external links
             links = []
@@ -98,8 +112,12 @@ class HTMLFetcher:
                 if href.startswith('http') and link_text:
                     links.append(f"[{link_text}]({href})")
             
-            # Combine content
+            # Combine content and clean up excessive blank lines
             content = "\n".join(extracted).strip()
+            
+            # Remove consecutive blank lines (replace multiple \n\n with just \n\n)
+            while "\n\n\n" in content:
+                content = content.replace("\n\n\n", "\n\n")
             
             # Add links section if there are external links
             if links:
