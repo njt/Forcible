@@ -74,6 +74,22 @@ Fetch only from Radio New Zealand:
 python forcible.py fetch --source rnz
 ```
 
+### Fetch Full Article HTML
+
+Fetch full HTML content for articles that don't have it yet:
+
+```bash
+python forcible.py fetch-html
+```
+
+Fetch HTML for a limited number of articles:
+
+```bash
+python forcible.py fetch-html --limit 10
+```
+
+This command fetches article content from URLs and extracts only the essential text (paragraphs, headings, links) to minimize token usage for LLM processing. Navigation, ads, and other non-content elements are removed.
+
 ### List Articles
 
 List recent articles:
@@ -150,6 +166,7 @@ This displays the article headline, content, and structured LLM analysis includi
 - **config.py**: Configuration management (supports both INI and JSON formats)
 - **database.py**: SQLite database interface for storing articles
 - **rnz_ingester.py**: Radio New Zealand RSS feed ingester
+- **html_fetcher.py**: HTML content fetcher for retrieving full article content
 - **llm_processor.py**: LLM-based article analysis with structured outputs
 - **forcible.py**: Command-line interface
 
@@ -162,7 +179,8 @@ This displays the article headline, content, and structured LLM analysis includi
 - `headline`: Article headline
 - `published_date`: Publication date (ISO format)
 - `fetched_date`: Date fetched from source
-- `content`: Article content/summary
+- `content`: Article content/summary from RSS feed
+- `raw_html`: Extracted article content (text, headings, links) from article URL
 - `data`: JSON field for LLM analysis results (facts, relevance, PR probability, etc.)
 - `created_at`: Record creation timestamp
 - `updated_at`: Last update timestamp
