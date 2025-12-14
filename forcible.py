@@ -8,7 +8,7 @@ import argparse
 import sys
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, UTC
 
 from config import Config
 from database import Database
@@ -210,7 +210,7 @@ def cmd_process(args):
         print("\nSaving results...")
         for article_id, analysis in results.items():
             # Add timestamp
-            analysis['processed_at'] = datetime.utcnow().isoformat()
+            analysis['processed_at'] = datetime.now(UTC).isoformat()
             
             # Get existing data and merge
             article = db.get_article_by_id(article_id)

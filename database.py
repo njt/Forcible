@@ -3,7 +3,7 @@ Database management for the news aggregator.
 """
 import sqlite3
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional, Dict, List, Any
 
 
@@ -107,7 +107,7 @@ class Database:
             Article ID
         """
         cursor = self.conn.cursor()
-        fetched_date = datetime.utcnow().isoformat()
+        fetched_date = datetime.now(UTC).isoformat()
         
         data_json = json.dumps(data) if data else None
         
@@ -130,7 +130,7 @@ class Database:
         """
         cursor = self.conn.cursor()
         data_json = json.dumps(data)
-        updated_at = datetime.utcnow().isoformat()
+        updated_at = datetime.now(UTC).isoformat()
         
         cursor.execute('''
             UPDATE articles 
@@ -171,7 +171,7 @@ class Database:
             last_article_date: Most recent article date seen
         """
         cursor = self.conn.cursor()
-        last_scraped = datetime.utcnow().isoformat()
+        last_scraped = datetime.now(UTC).isoformat()
         
         cursor.execute('''
             INSERT OR REPLACE INTO source_tracking 
