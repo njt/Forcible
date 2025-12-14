@@ -88,7 +88,7 @@ Fetch HTML for a limited number of articles:
 python forcible.py fetch-html --limit 10
 ```
 
-This command fetches the raw HTML content from article URLs and stores it in the database. The HTML is cleaned of script and style tags but preserves the article structure for later processing.
+This command fetches article content from URLs and extracts only the essential text (paragraphs, headings, links) to minimize token usage for LLM processing. Navigation, ads, and other non-content elements are removed.
 
 ### List Articles
 
@@ -180,7 +180,7 @@ This displays the article headline, content, and structured LLM analysis includi
 - `published_date`: Publication date (ISO format)
 - `fetched_date`: Date fetched from source
 - `content`: Article content/summary from RSS feed
-- `raw_html`: Full raw HTML content fetched from article URL
+- `raw_html`: Extracted article content (text, headings, links) from article URL
 - `data`: JSON field for LLM analysis results (facts, relevance, PR probability, etc.)
 - `created_at`: Record creation timestamp
 - `updated_at`: Last update timestamp

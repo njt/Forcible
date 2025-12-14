@@ -23,27 +23,89 @@ class HTMLFetcher:
     
     def fetch_html(self, url: str) -> Optional[str]:
         """
-        Fetch raw HTML content from a URL.
+        Fetch and extract article content from a URL.
+        
+        Extracts only the main article content (paragraphs, headings, links)
+        to minimize token usage for LLM processing.
         
         Args:
             url: Article URL
             
         Returns:
-            Raw HTML content or None if fetch fails
+            Extracted article content or None if fetch fails
         """
         try:
             response = requests.get(url, headers=self.headers, timeout=30, allow_redirects=True)
             response.raise_for_status()
             
-            # Parse HTML to remove script and style tags
+            # Parse HTML
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # Remove script and style elements
-            for script in soup(['script', 'style']):
-                script.decompose()
+            # Remove unwanted elements
+            for element in soup(['script', 'style', 'nav', 'header', 'footer', 
+                                'aside', 'iframe', 'noscript', 'form']):
+                element.decompose()
             
-            # Return the cleaned HTML as string
-            return str(soup)
+            # Try to find the main article content
+            # Common article containers
+            article_content = None
+            for selector in ['article', 'main', '[role="main"]', '.article-content', 
+                           '.post-content', '.entry-content', '#content']:
+                article_content = soup.select_one(selector)
+                if article_content:
+                    break
+            
+            # If no article container found, use body
+            if not article_content:
+                article_content = soup.body if soup.body else soup
+            
+            # Extract text content with structure
+            extracted = []
+            
+            # Extract title if available
+            title = soup.find('h1')
+            if title:
+                extracted.append(f"# {title.get_text(strip=True)}\n")
+            
+            # Extract paragraphs, headings, and lists from the article content
+            for element in article_content.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'blockquote']):
+                text = element.get_text(strip=True)
+                if text:  # Only include non-empty elements
+                    tag = element.name
+                    
+                    if tag == 'p':
+                        extracted.append(text)
+                    elif tag in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                        level = int(tag[1])
+                        extracted.append(f"\n{'#' * level} {text}\n")
+                    elif tag in ['ul', 'ol']:
+                        # Extract list items
+                        for li in element.find_all('li', recursive=False):
+                            li_text = li.get_text(strip=True)
+                            if li_text:
+                                extracted.append(f"- {li_text}")
+                    elif tag == 'blockquote':
+                        extracted.append(f"> {text}")
+                    
+                    extracted.append("")  # Add blank line between elements
+            
+            # Extract external links
+            links = []
+            for a in article_content.find_all('a', href=True):
+                href = a['href']
+                link_text = a.get_text(strip=True)
+                # Only include external links (http/https)
+                if href.startswith('http') and link_text:
+                    links.append(f"[{link_text}]({href})")
+            
+            # Combine content
+            content = "\n".join(extracted).strip()
+            
+            # Add links section if there are external links
+            if links:
+                content += "\n\n## External Links\n" + "\n".join(links)
+            
+            return content if content else None
             
         except requests.RequestException as e:
             print(f"Error fetching HTML from {url}: {e}")
