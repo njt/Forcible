@@ -14,6 +14,7 @@ from config import Config
 from database import Database
 from rnz_ingester import RNZIngester
 from llm_processor import LLMProcessor
+from html_fetcher import HTMLFetcher
 
 
 def cmd_fetch(args):
@@ -40,6 +41,47 @@ def cmd_fetch(args):
         sys.exit(1)
     except Exception as e:
         print(f"Error during fetch: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_fetch_html(args):
+    """Fetch full HTML content for articles."""
+    try:
+        config = Config(args.config)
+        db = Database(config.get_database_path())
+        
+        fetcher = HTMLFetcher(db)
+        
+        # Get articles without HTML
+        articles_to_fetch = db.get_articles_without_html(limit=args.limit)
+        
+        if not articles_to_fetch:
+            print("No articles need HTML fetching.")
+            db.close()
+            return
+        
+        print(f"Fetching HTML for {len(articles_to_fetch)} article(s)...\n")
+        
+        # Progress callback
+        def progress_callback(current, total, headline):
+            print(f"[{current}/{total}] Fetching: {headline[:60]}...")
+        
+        # Fetch HTML
+        success_count = fetcher.fetch_all_missing_html(
+            limit=args.limit,
+            progress_callback=progress_callback
+        )
+        
+        db.close()
+        print(f"\nFetch complete! Successfully fetched {success_count} article(s).")
+        
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error during HTML fetch: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 
@@ -344,6 +386,15 @@ def main():
         help='Source to fetch from (default: all)'
     )
     parser_fetch.set_defaults(func=cmd_fetch)
+    
+    # fetch-html command
+    parser_fetch_html = subparsers.add_parser('fetch-html', help='Fetch full HTML content for articles')
+    parser_fetch_html.add_argument(
+        '--limit',
+        type=int,
+        help='Maximum number of articles to fetch (default: all without HTML)'
+    )
+    parser_fetch_html.set_defaults(func=cmd_fetch_html)
     
     # list command
     parser_list = subparsers.add_parser('list', help='List articles')

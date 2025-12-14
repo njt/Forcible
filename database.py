@@ -36,6 +36,7 @@ class Database:
                 published_date TEXT,
                 fetched_date TEXT NOT NULL,
                 content TEXT,
+                raw_html TEXT,
                 data TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -139,6 +140,61 @@ class Database:
         ''', (data_json, updated_at, article_id))
         
         self.conn.commit()
+    
+    def update_article_html(self, article_id: int, raw_html: str):
+        """
+        Update article raw HTML content.
+        
+        Args:
+            article_id: Article ID
+            raw_html: Raw HTML content of the article
+        """
+        cursor = self.conn.cursor()
+        updated_at = datetime.now(UTC).isoformat()
+        
+        cursor.execute('''
+            UPDATE articles 
+            SET raw_html = ?, updated_at = ?
+            WHERE id = ?
+        ''', (raw_html, updated_at, article_id))
+        
+        self.conn.commit()
+    
+    def get_articles_without_html(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Get articles that don't have raw HTML fetched yet.
+        
+        Args:
+            limit: Maximum number of articles to return (optional)
+            
+        Returns:
+            List of article dictionaries
+        """
+        cursor = self.conn.cursor()
+        
+        query = '''
+            SELECT * FROM articles 
+            WHERE raw_html IS NULL
+            ORDER BY published_date DESC
+        '''
+        
+        if limit:
+            query += ' LIMIT ?'
+            cursor.execute(query, (limit,))
+        else:
+            cursor.execute(query)
+        
+        articles = []
+        for row in cursor.fetchall():
+            article = dict(row)
+            if article['data']:
+                try:
+                    article['data'] = json.loads(article['data'])
+                except json.JSONDecodeError:
+                    article['data'] = None
+            articles.append(article)
+        
+        return articles
     
     def get_last_scrape_time(self, source_name: str) -> Optional[str]:
         """
