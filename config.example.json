@@ -1,0 +1,23 @@
+{
+  "openai": {
+    "api_key": "your-openai-api-key-here"
+  },
+  "llm": {
+    "model": "gpt-4o-mini"
+  },
+  "prompts": {
+    "extract_facts": "Extract key facts and statistics from this article. Return a JSON list of facts.",
+    "relevance_scoring": "Rate the relevance of this article on a scale of 0-10 based on New Zealand news interests.",
+    "pr_detection": "Estimate the probability (0-100) that this article was planted by PR/communications teams.",
+    "content_classification": "Classify this article as either 'headline-only' or 'clickthrough' based on whether the headline alone conveys the key information."
+  },
+  "sources": {
+    "rnz_national": "https://www.rnz.co.nz/rss/national.xml",
+    "rnz_world": "https://www.rnz.co.nz/rss/world.xml",
+    "rnz_business": "https://www.rnz.co.nz/rss/business.xml",
+    "rnz_political": "https://www.rnz.co.nz/rss/political.xml"
+  },
+  "database": {
+    "path": "news.db"
+  }
+}
