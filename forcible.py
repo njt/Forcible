@@ -7,6 +7,7 @@ A personalized New Zealand news aggregator with intelligent content curation.
 import argparse
 import sys
 import json
+import traceback
 from pathlib import Path
 from datetime import datetime, UTC
 
@@ -80,7 +81,6 @@ def cmd_fetch_html(args):
         sys.exit(1)
     except Exception as e:
         print(f"Error during HTML fetch: {e}", file=sys.stderr)
-        import traceback
         traceback.print_exc()
         sys.exit(1)
 
@@ -286,7 +286,6 @@ def cmd_process(args):
         sys.exit(1)
     except Exception as e:
         print(f"Error during processing: {e}", file=sys.stderr)
-        import traceback
         traceback.print_exc()
         sys.exit(1)
 

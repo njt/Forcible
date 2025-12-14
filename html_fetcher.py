@@ -18,7 +18,7 @@ class HTMLFetcher:
         """
         self.db = database
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
     
     def fetch_html(self, url: str) -> Optional[str]:
@@ -32,7 +32,7 @@ class HTMLFetcher:
             Raw HTML content or None if fetch fails
         """
         try:
-            response = requests.get(url, headers=self.headers, timeout=30)
+            response = requests.get(url, headers=self.headers, timeout=30, allow_redirects=True)
             response.raise_for_status()
             
             # Parse HTML to remove script and style tags
